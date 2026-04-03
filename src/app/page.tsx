@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { supabase } from '@/lib/supabase';
-import { UserPlus, Play, RotateCcw, PlusCircle, Trash2 } from 'lucide-react';
+import { UserPlus, Play, RotateCcw, PlusCircle, Trash2, Lock } from 'lucide-react';
 
 type Participant = {
   id: string;
@@ -33,6 +33,8 @@ export default function Home() {
   const [newName, setNewName] = useState('');
   const [winner, setWinner] = useState<Participant | null>(null);
   const raceInterval = useRef<NodeJS.Timeout | null>(null);
+  const [authenticated, setAuthenticated] = useState(!process.env.NEXT_PUBLIC_SITE_PASSWORD);
+  const [passwordInput, setPasswordInput] = useState('');
 
   // Global click for confetti
   useEffect(() => {
@@ -172,6 +174,45 @@ export default function Home() {
     }
   };
 
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === process.env.NEXT_PUBLIC_SITE_PASSWORD) {
+      setAuthenticated(true);
+    } else {
+      alert("Incorrect password!");
+    }
+  };
+
+  if (!authenticated) {
+    return (
+      <main className="container">
+        <div className="glass-panel" style={{ maxWidth: '400px', margin: '10vh auto' }}>
+          <header className="app-header">
+            <img src="/logo.png" alt="Chore Race Logo" className="logo" />
+            <h1 className="title" style={{ fontSize: '2.5rem' }}>Chore Race</h1>
+          </header>
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>This app is password protected.</p>
+            <input 
+              type="password" 
+              className="input" 
+              placeholder="Enter Passcode" 
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              onFocus={(e) => e.target.placeholder = ''}
+              onBlur={(e) => e.target.placeholder = 'Enter Passcode'}
+              autoComplete="new-password"
+              autoFocus
+            />
+            <button type="submit" className="btn btn-large" style={{ marginTop: '0' }}>
+              <Lock size={20} /> Unlock
+            </button>
+          </form>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="container">
       <div className="glass-panel">
@@ -195,7 +236,7 @@ export default function Home() {
                 maxLength={30}
               />
               <button type="submit" className="btn">
-                <UserPlus size={20} /> Add
+                <UserPlus size={20} /> <span className="btn-text">Add</span>
               </button>
             </form>
 
