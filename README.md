@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Chore Race
 
-## Getting Started
+Turn boring decisions into a fast, playful race!
 
-First, run the development server:
+**Here's what was implemented:**
+1. **Interactive Race:** Users can add multiple racers (or chores!). A random speed algorithm ensures unexpected winners, keeping the race thrilling each time.
+2. **Supabase Integration:** The Supabase configuration has been embedded into `.env.local` linking up the app automatically to log recent race winners.
+3. **Animations:** Canvas Confetti has been implemented so you get showers of confetti not just at the end of every race, but any time a user taps their screen anywhere!
+4. **Modern Design:** Generative logo integrated, mobile-first responsiveness, and pure CSS layout for ultra-fast load execution, leveraging a polished dark/glassmorphism aesthetic. 
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 🛠 Supabase Database Setup
+
+To make sure the application can log race histories properly to your backend, you will need to add a `race_history` table in Supabase.
+
+1. Navigate to your Supabase Project (`cceejcsqxlaqlgfjrtve`).
+2. Open the **SQL Editor**.
+3. Paste and run the following query:
+
+```sql
+CREATE TABLE race_history (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at timestamp with time zone DEFAULT now(),
+  participants text[],
+  winner_name text
+);
+
+-- Note: You may want to enable policies depending on your row-level security preferences.
+-- To allow ANY insert directly from the client without logging in:
+ALTER TABLE race_history ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public inserts" ON race_history FOR INSERT WITH CHECK (true);
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## ▶️ Running the App
+Once everything is ready, simply start up the development server:
+1. Open your terminal in the project directory.
+2. Run `npm run dev`
+3. Navigate to `http://localhost:3000` via your web browser to enjoy!
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Enjoy your sleek new app!
