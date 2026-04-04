@@ -57,8 +57,8 @@ export default function Home() {
     if (e) e.preventDefault();
     if (!newName.trim()) return;
 
-    if (participants.length >= 8) {
-      toast.warning("Maximum 8 racers allowed!");
+    if (participants.length >= 30) {
+      toast.warning("Maximum 30 racers allowed!");
       return;
     }
 
