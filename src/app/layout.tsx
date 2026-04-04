@@ -5,7 +5,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Chore Race",
-  description: "Turn boring decisions into a fast, playful race!",
+  description: "Turn boring decisions into a fast, playful game!",
 };
 
 export default function RootLayout({

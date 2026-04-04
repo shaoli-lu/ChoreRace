@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { supabase } from '@/lib/supabase';
-import { UserPlus, Play, RotateCcw, PlusCircle, Trash2, Lock } from 'lucide-react';
+import { UserPlus, Play, RotateCcw, PlusCircle, Trash2, Lock, Ticket, Upload, Download, RefreshCw } from 'lucide-react';
 
 type Participant = {
   id: string;
@@ -29,8 +29,12 @@ const COLORS = [
 type Phase = 'setup' | 'racing' | 'result';
 
 export default function Home() {
+  const [activeTab, setActiveTab] = useState<'race' | 'raffle'>('race');
   const [phase, setPhase] = useState<Phase>('setup');
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [raffleNames, setRaffleNames] = useState<string[]>([]);
+  const [raffleWinner, setRaffleWinner] = useState<string | null>(null);
+  const [isRolling, setIsRolling] = useState(false);
   const [newName, setNewName] = useState('');
   const [winner, setWinner] = useState<Participant | null>(null);
   const raceInterval = useRef<NodeJS.Timeout | null>(null);
@@ -189,6 +193,54 @@ export default function Home() {
     }
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const names = text
+        .split(/[\n,;]/)
+        .map(n => n.trim())
+        .filter(n => n.length > 0);
+
+      setRaffleNames(prev => [...new Set([...prev, ...names])]);
+      toast.success(`Added ${names.length} names from file!`);
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // Reset input
+  };
+
+  const drawRaffle = () => {
+    if (raffleNames.length < 2) {
+      toast.error("Add at least 2 names to draw a winner!");
+      return;
+    }
+
+    setIsRolling(true);
+    setRaffleWinner(null);
+
+    // Simulate "rolling" effect
+    let count = 0;
+    const interval = setInterval(() => {
+      count++;
+      if (count > 20) {
+        clearInterval(interval);
+        const win = raffleNames[Math.floor(Math.random() * raffleNames.length)];
+        setRaffleWinner(win);
+        setIsRolling(false);
+
+        // Confetti!
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
+    }, 100);
+  };
+
   if (!authenticated) {
     return (
       <main className="container">
@@ -226,99 +278,207 @@ export default function Home() {
           <img src="/logo.png" alt="Chore Race Logo" className="logo" />
           <div>
             <h1 className="title">Chore Race</h1>
-            <p className="subtitle">Turn boring decisions into a playful race!</p>
+            <p className="subtitle">{activeTab === 'race' ? 'Turn boring decisions into a fun game!' : 'Randomly pick a winner from a list of names!'}</p>
           </div>
         </header>
 
-        {phase === 'setup' && (
-          <div className="setup-container">
-            <form onSubmit={addParticipant} className="input-group">
-              <input
-                type="text"
-                className="input"
-                placeholder="Enter a name..."
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                maxLength={30}
-              />
-              <button type="submit" className="btn">
-                <UserPlus size={20} /> <span className="btn-text">Add</span>
-              </button>
-            </form>
+        <div className="tabs">
+          <button
+            className={`tab ${activeTab === 'race' ? 'active' : ''}`}
+            onClick={() => setActiveTab('race')}
+          >
+            <Play size={18} /> Race
+          </button>
+          <button
+            className={`tab ${activeTab === 'raffle' ? 'active' : ''}`}
+            onClick={() => setActiveTab('raffle')}
+          >
+            <Ticket size={18} /> Raffle
+          </button>
+        </div>
 
-            <div className="participants-list">
-              {participants.length === 0 ? (
-                <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>
-                  No racers added yet. Add some names above!
-                </div>
-              ) : (
-                participants.map((p) => (
-                  <div key={p.id} className="participant-item">
-                    <div className="participant-info">
-                      <div className="avatar" style={{ background: p.color }}>
-                        {p.emoji}
-                      </div>
-                      <span>{p.name}</span>
+        {activeTab === 'race' ? (
+          <>
+            {phase === 'setup' && (
+              <div className="setup-container">
+                <form onSubmit={addParticipant} className="input-group">
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="Enter a name..."
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    maxLength={30}
+                  />
+                  <button type="submit" className="btn">
+                    <UserPlus size={20} /> <span className="btn-text">Add</span>
+                  </button>
+                </form>
+
+                <div className="participants-list">
+                  {participants.length === 0 ? (
+                    <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>
+                      No racers added yet. Add some names above!
                     </div>
-                    <button
-                      className="btn btn-danger"
-                      style={{ padding: '0.4rem', borderRadius: '50%' }}
-                      onClick={() => removeParticipant(p.id)}
-                      title="Remove"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <button
-              className="btn btn-large"
-              onClick={startRace}
-              disabled={participants.length < 2}
-            >
-              <Play size={24} /> Start the Race!
-            </button>
-          </div>
-        )}
-
-        {(phase === 'racing' || phase === 'result') && (
-          <div className="race-container">
-            {phase === 'result' && winner && (
-              <div className="winner-banner">
-                <h2 style={{ fontSize: '1.5rem', color: 'var(--text-main)', marginBottom: '0' }}>WE HAVE A WINNER!</h2>
-                <h2>{winner.name}</h2>
-                <div className="winner-racer" style={{ background: winner.color }}>
-                  {winner.emoji}
+                  ) : (
+                    participants.map((p) => (
+                      <div key={p.id} className="participant-item">
+                        <div className="participant-info">
+                          <div className="avatar" style={{ background: p.color }}>
+                            {p.emoji}
+                          </div>
+                          <span>{p.name}</span>
+                        </div>
+                        <button
+                          className="btn btn-danger"
+                          style={{ padding: '0.4rem', borderRadius: '50%' }}
+                          onClick={() => removeParticipant(p.id)}
+                          title="Remove"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
 
-                <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                  <button className="btn btn-large" onClick={() => resetRace(true)} style={{ flex: 1 }}>
-                    <RotateCcw size={20} /> Rematch
-                  </button>
-                  <button className="btn btn-large" onClick={() => resetRace(false)} style={{ flex: 1, background: 'var(--panel-bg)', border: '1px solid var(--accent)' }}>
-                    <PlusCircle size={20} /> New Race
-                  </button>
-                </div>
+                <button
+                  className="btn btn-large"
+                  onClick={startRace}
+                  disabled={participants.length < 2}
+                >
+                  <Play size={24} /> Start the Race!
+                </button>
               </div>
             )}
 
-            {participants.map((p) => (
-              <div key={p.id} className="track" style={{ opacity: phase === 'result' && winner?.id !== p.id ? 0.4 : 1 }}>
-                <div className="finish-line-marker"></div>
-                <div
-                  className="racer"
-                  style={{
-                    left: `calc(${p.progress}% - ${p.progress * 0.48}px)`,
-                    background: p.color
+            {(phase === 'racing' || phase === 'result') && (
+              <div className="race-container">
+                {phase === 'result' && winner && (
+                  <div className="winner-banner">
+                    <h2 style={{ fontSize: '1.5rem', color: 'var(--text-main)', marginBottom: '0' }}>WE HAVE A WINNER!</h2>
+                    <h2>{winner.name}</h2>
+                    <div className="winner-racer" style={{ background: winner.color }}>
+                      {winner.emoji}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+                      <button className="btn btn-large" onClick={() => resetRace(true)} style={{ flex: 1 }}>
+                        <RotateCcw size={20} /> Rematch
+                      </button>
+                      <button className="btn btn-large" onClick={() => resetRace(false)} style={{ flex: 1, background: 'var(--panel-bg)', border: '1px solid var(--accent)' }}>
+                        <PlusCircle size={20} /> New Race
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {participants.map((p) => (
+                  <div key={p.id} className="track" style={{ opacity: phase === 'result' && winner?.id !== p.id ? 0.4 : 1 }}>
+                    <div className="finish-line-marker"></div>
+                    <div
+                      className="racer"
+                      style={{
+                        left: `calc(${p.progress}% - ${p.progress * 0.48}px)`,
+                        background: p.color
+                      }}
+                    >
+                      <div className="racer-name">{p.name}</div>
+                      {p.emoji}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="raffle-container">
+            <div className="raffle-setup">
+              <div className="raffle-controls">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!newName.trim()) return;
+                    setRaffleNames(prev => [...new Set([...prev, newName.trim()])]);
+                    setNewName('');
                   }}
+                  className="input-group"
                 >
-                  <div className="racer-name">{p.name}</div>
-                  {p.emoji}
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="Enter name..."
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                  />
+                  <button type="submit" className="btn">
+                    <PlusCircle size={20} /> <span className="btn-text">Add</span>
+                  </button>
+                </form>
+
+                <div className="file-actions">
+                  <label className="btn btn-secondary" style={{ flex: 1, cursor: 'pointer' }}>
+                    <Upload size={18} /> Upload .txt / .csv
+                    <input
+                      type="file"
+                      accept=".txt,.csv"
+                      style={{ display: 'none' }}
+                      onChange={handleFileUpload}
+                    />
+                  </label>
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => {
+                      if (confirm("Clear all names?")) {
+                        setRaffleNames([]);
+                      }
+                    }}
+                    disabled={raffleNames.length === 0}
+                  >
+                    <Trash2 size={18} /> Clear
+                  </button>
                 </div>
               </div>
-            ))}
+
+              <div className="raffle-list">
+                <div className="list-header">
+                  <span>List of Names ({raffleNames.length})</span>
+                </div>
+                <div className="names-grid">
+                  {raffleNames.length === 0 ? (
+                    <div className="empty-state">No names added yet.</div>
+                  ) : (
+                    raffleNames.map((name, idx) => (
+                      <div key={idx} className="name-tag">
+                        {name}
+                        <button
+                          className="name-remove"
+                          onClick={() => setRaffleNames(prev => prev.filter((_, i) => i !== idx))}
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {raffleWinner && (
+                <div className="raffle-winner-card">
+                  <div className="winner-label">WINNER!</div>
+                  <div className="winner-name-display">{raffleWinner}</div>
+                </div>
+              )}
+
+              <button
+                className={`btn btn-large btn-raffle ${isRolling ? 'rolling' : ''}`}
+                onClick={drawRaffle}
+                disabled={raffleNames.length < 2 || isRolling}
+              >
+                {isRolling ? <RefreshCw className="spin" size={24} /> : <Ticket size={24} />}
+                {isRolling ? 'Picking a Winner...' : 'Draw a Winner!'}
+              </button>
+            </div>
           </div>
         )}
       </div>
