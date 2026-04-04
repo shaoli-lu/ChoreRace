@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { supabase } from '@/lib/supabase';
 import { UserPlus, Play, RotateCcw, PlusCircle, Trash2, Lock } from 'lucide-react';
@@ -57,7 +58,7 @@ export default function Home() {
     if (!newName.trim()) return;
 
     if (participants.length >= 8) {
-      alert("Maximum 8 racers allowed!");
+      toast.warning("Maximum 8 racers allowed!");
       return;
     }
 
@@ -79,7 +80,7 @@ export default function Home() {
 
   const startRace = () => {
     if (participants.length < 2) {
-      alert("Add at least 2 racers to start!");
+      toast.error("Add at least 2 racers to start!");
       return;
     }
     setParticipants(pts => pts.map(p => ({ ...p, progress: 0 })));
@@ -176,10 +177,15 @@ export default function Home() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!passwordInput.trim()) {
+      toast.error("Please Enter the Passcode");
+      return;
+    }
     if (passwordInput === process.env.NEXT_PUBLIC_SITE_PASSWORD) {
       setAuthenticated(true);
+      toast.success("Welcome to Chore Race!");
     } else {
-      alert("Incorrect password!");
+      toast.error("Incorrect password!");
     }
   };
 
