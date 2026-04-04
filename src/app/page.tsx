@@ -193,10 +193,10 @@ export default function Home() {
           </header>
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>This app is password protected.</p>
-            <input 
-              type="password" 
-              className="input" 
-              placeholder="Enter Passcode" 
+            <input
+              type="password"
+              className="input"
+              placeholder="Enter Passcode"
               value={passwordInput}
               onChange={(e) => setPasswordInput(e.target.value)}
               onFocus={(e) => e.target.placeholder = ''}
@@ -316,6 +316,8 @@ export default function Home() {
           </div>
         )}
       </div>
+
     </main>
+
   );
 }

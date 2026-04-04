@@ -15,6 +15,11 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
+        <footer className="footer">
+          <div className="container">
+            <p>Made with ❤️ and ☕</p>
+          </div>
+        </footer>
       </body>
     </html>
   );
