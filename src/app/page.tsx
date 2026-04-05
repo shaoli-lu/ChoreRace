@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { supabase } from '@/lib/supabase';
-import { UserPlus, Play, RotateCcw, PlusCircle, Trash2, Lock, Ticket, Upload, Download, RefreshCw } from 'lucide-react';
+import { UserPlus, Play, RotateCcw, PlusCircle, Trash2, Lock, Ticket, Upload, Download, RefreshCw, HelpCircle, X } from 'lucide-react';
 
 type Participant = {
   id: string;
@@ -41,6 +41,7 @@ export default function Home() {
   const raceInterval = useRef<NodeJS.Timeout | null>(null);
   const [authenticated, setAuthenticated] = useState(!process.env.NEXT_PUBLIC_SITE_PASSWORD);
   const [passwordInput, setPasswordInput] = useState('');
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   // Global click for confetti
   useEffect(() => {
@@ -314,11 +315,49 @@ export default function Home() {
       <div className="glass-panel">
         <header className="app-header">
           <img src="/logo.png" alt="Decision Dash Logo" className="logo" />
-          <div>
+          <div style={{ flex: 1 }}>
             <h1 className="title">Decision Dash</h1>
             <p className="subtitle">{activeTab === 'race' ? 'Turn boring decisions into a fun game!' : 'Randomly pick a winner from a list of names!'}</p>
           </div>
+          <button 
+            className="btn btn-icon" 
+            onClick={() => setIsHelpOpen(true)}
+            title="How to use"
+          >
+            <HelpCircle size={24} />
+          </button>
         </header>
+
+        {isHelpOpen && (
+          <div className="modal-overlay" onClick={() => setIsHelpOpen(false)}>
+            <div className="modal-content glass-panel" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>HOW TO PLAY</h2>
+                <button className="btn-close" onClick={() => setIsHelpOpen(false)}>
+                  <X size={24} />
+                </button>
+              </div>
+              <div className="modal-body">
+                <section>
+                  <h3>🏎️ Race Mode</h3>
+                  <p><strong>Perfect for 2-30 decisions.</strong> Add names, hit start, and watch them dash! First to the finish line wins.</p>
+                </section>
+                <section>
+                  <h3>🎟️ Raffle Mode</h3>
+                  <p><strong>Perfect for large lists.</strong> Enter names manually or upload a <code>.txt</code> or <code>.csv</code> file for massive draws. Land on a random winner with suspense!</p>
+                </section>
+                <section>
+                  <h3>💡 Tips</h3>
+                  <ul>
+                    <li>Use <strong>Rematch</strong> to settle a tie-breaker.</li>
+                    <li>Hit <strong>New Race</strong> to clear the list and pick new competitors.</li>
+                  </ul>
+                </section>
+              </div>
+              <button className="btn btn-large" onClick={() => setIsHelpOpen(false)}>GOT IT!</button>
+            </div>
+          </div>
+        )}
 
         <div className="tabs">
           <button
