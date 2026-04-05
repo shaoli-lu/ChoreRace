@@ -34,6 +34,7 @@ export default function Home() {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [raffleNames, setRaffleNames] = useState<string[]>([]);
   const [raffleWinner, setRaffleWinner] = useState<string | null>(null);
+  const [rollingName, setRollingName] = useState<string | null>(null);
   const [isRolling, setIsRolling] = useState(false);
   const [newName, setNewName] = useState('');
   const [winner, setWinner] = useState<Participant | null>(null);
@@ -220,25 +221,62 @@ export default function Home() {
 
     setIsRolling(true);
     setRaffleWinner(null);
+    setRollingName(raffleNames[0]);
 
-    // Simulate "rolling" effect
-    let count = 0;
-    const interval = setInterval(() => {
-      count++;
-      if (count > 20) {
-        clearInterval(interval);
-        const win = raffleNames[Math.floor(Math.random() * raffleNames.length)];
-        setRaffleWinner(win);
+    // Suspension Draw Logic
+    let currentDelay = 50;
+    const maxDelay = 600;
+    const iterations = 40 + Math.floor(Math.random() * 10); // 40-50 steps
+    let currentStep = 0;
+
+    const spin = () => {
+      currentStep++;
+      
+      // Pick a random name for the visual "rolling" effect
+      const randomIndex = Math.floor(Math.random() * raffleNames.length);
+      setRollingName(raffleNames[randomIndex]);
+
+      if (currentStep < iterations) {
+        // Gradually increase delay for "slowing down" effect
+        if (currentStep > iterations * 0.6) {
+          currentDelay += (maxDelay - currentDelay) * 0.15;
+        }
+        setTimeout(spin, currentDelay);
+      } else {
+        // Final Winner
+        const finalWinner = raffleNames[randomIndex];
+        setRaffleWinner(finalWinner);
+        setRollingName(null);
         setIsRolling(false);
+        
+        // Grand Confetti
+        const end = Date.now() + 3000;
+        const colors = ['#fbbf24', '#f59e0b', '#ffffff'];
 
-        // Confetti!
-        confetti({
-          particleCount: 150,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
+        (function frame() {
+          confetti({
+            particleCount: 3,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: colors
+          });
+          confetti({
+            particleCount: 3,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: colors
+          });
+
+          if (Date.now() < end) {
+            requestAnimationFrame(frame);
+          }
+        }());
       }
-    }, 100);
+    };
+
+    spin();
   };
 
   if (!authenticated) {
@@ -463,14 +501,29 @@ export default function Home() {
                 </div>
               </div>
 
-              {raffleWinner && (
-                <div className="raffle-winner-card">
-                  <div className="winner-label">WINNER!</div>
-                  <div className="winner-name-display">{raffleWinner}</div>
-                </div>
-              )}
+              <div className="raffle-visual-stage">
+                {isRolling && (
+                  <div className="rolling-name-container">
+                    <div className="rolling-name-display">{rollingName}</div>
+                  </div>
+                )}
 
-              <button
+                {raffleWinner && !isRolling && (
+                  <div className="raffle-winner-card">
+                    <div className="winner-label">WINNER!</div>
+                    <div className="winner-name-display">{raffleWinner}</div>
+                  </div>
+                )}
+                
+                {!isRolling && !raffleWinner && (
+                  <div className="raffle-placeholder">
+                    <Ticket size={80} className="placeholder-icon" />
+                    <p>Ready to pick a winner?</p>
+                  </div>
+                )}
+              </div>
+
+              <button 
                 className={`btn btn-large btn-raffle ${isRolling ? 'rolling' : ''}`}
                 onClick={drawRaffle}
                 disabled={raffleNames.length < 2 || isRolling}
