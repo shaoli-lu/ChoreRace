@@ -4,7 +4,7 @@ import Footer from "@/components/Footer";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Chore Race",
+  title: "Decision Dash",
   description: "Turn boring decisions into a fast, playful game!",
 };
 

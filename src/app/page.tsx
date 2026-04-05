@@ -188,7 +188,7 @@ export default function Home() {
     }
     if (passwordInput === process.env.NEXT_PUBLIC_SITE_PASSWORD) {
       setAuthenticated(true);
-      toast.success("Welcome to Chore Race!");
+      toast.success("Welcome to Decision Dash!");
     } else {
       toast.error("Incorrect password!");
     }
@@ -285,7 +285,7 @@ export default function Home() {
         <div className="glass-panel" style={{ maxWidth: '400px', margin: '10vh auto' }}>
           <header className="app-header">
             <img src="/logo.png" alt="Chore Race Logo" className="logo" />
-            <h1 className="title" style={{ fontSize: '2.5rem' }}>Chore Race</h1>
+            <h1 className="title" style={{ fontSize: '2.5rem' }}>Decision Dash</h1>
           </header>
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>This app is password protected.</p>
@@ -313,9 +313,9 @@ export default function Home() {
     <main className="container">
       <div className="glass-panel">
         <header className="app-header">
-          <img src="/logo.png" alt="Chore Race Logo" className="logo" />
+          <img src="/logo.png" alt="Decision Dash Logo" className="logo" />
           <div>
-            <h1 className="title">Chore Race</h1>
+            <h1 className="title">Decision Dash</h1>
             <p className="subtitle">{activeTab === 'race' ? 'Turn boring decisions into a fun game!' : 'Randomly pick a winner from a list of names!'}</p>
           </div>
         </header>
